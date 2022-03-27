@@ -1,0 +1,393 @@
+---
+title: "Coursework 21MAP500"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r, include = FALSE, warning = FALSE}
+
+library("tidyverse")
+library("ggplot2")
+library("janitor")
+library("here")
+library("janitor")
+library("lubridate")
+#loading in the relevant packages
+```
+
+## Question 1
+
+### 1.a: Read nasa_global_temperature.txt into a tibble called nasa_temp containing only the variables date and temp. The former should have type date (you can assume that month and day are January, 1st). The latter is the column named No_smoothing in the original file. You may understand temp as the average temperature across global land and ocean surfaces in °C. Visualise the contents of nasa_temp.
+```{r, warning = FALSE}
+
+nasa_temp1<- read_table(here("data", "nasa_global_temperature.txt"), skip = 3)%>% #reading the data as a table
+  rename(temp = No_Smoothing, #renaming the variables
+         date = Year)%>%
+  select(date, temp)%>% #selecting the variables required 
+  clean_names()#formatting the data to snake eyes
+
+nasa_temp <-nasa_temp1 %>% #renaming the variable and removing the first row of the data set.
+  slice(-1)%>% 
+  mutate(date = parse_date((date),format = "%F")) #parsing the data to be reformatted as a date. 
+
+nasa_temp%>%
+  ggplot(mapping = aes(x = date, y = temp)) + labs(y = "Average temperature across global land
+     & ocean surfaces in °C", x = "Years") +#setting the aes, and mapping the variables to the x and y axis. 
+  geom_point()+
+  theme_classic()
+```
+
+### 1.b: Read nasa_arctic_sea_ice.csv into a tibble called nasa_ice containing only the variables date and ice. The former should have type date (you can assume that month and day are January 1st). The latter is the column named extent in the original file. You may understand ice as the minimum arctic sea ice extent in million square km. Visualise the contents of nasa_ice.
+
+```{r, warning = FALSE}
+nasa_ice <-read_csv2(here("data", "nasa_arctic_sea_ice.csv"))%>% #loading in the data, naming the variable
+  rename(date = year, 
+         ice = extent)%>% #renaming the variables 
+  select(date, ice)%>% #selecting the correct types 
+  remove_empty()%>% #removing any empty entries
+  clean_names() #formatting to snake eyes 
+  
+nasa_ice%>%
+  mutate(date = as.character(date))%>% #changing the date to be changed to a character
+  mutate(date = parse_date(date, format = "%F"))#to then be able to be parsed and formatted as a date 
+
+  nasa_ice%>%
+    ggplot(mapping = aes(x = date, y = ice)) +#plotting the data using ggplot
+    labs(x = "Years", y = "Minimum arctic sea ice extent in million square km")+ #renaming the axis'
+    geom_point()+
+    theme_classic()#plotting the data 
+```
+
+### 1.c: Read nasa_sea_level.csv into a tibble called nasa_sea containing only variables date and sea. The former should have type date (you can assume that fractional years have been calculated for time zone “UTC”). The latter should be the values from the twelfth column in the original file. You may understand sea as the change in sea level compared to a reference year in mm. Visualise the contents of nasa_sea.[3
+
+```{r, warning = FALSE}
+nasa_sea <-read_table(here("data","nasa_sea_level.csv"), skip = 48 ,col_names = FALSE)%>% #reading the data in 
+  select(X3, X12)%>% #selecting the correct columns, and renaming them appropriate 
+  rename(sea = X12,
+         date = X3)%>%
+  mutate(date = date_decimal(date, tz = "UTC"))%>% #changing the data to be reformatted into a date, using data.decimal
+  mutate(date = date(date))%>%
+  clean_names() #once again, formatting the data to snake eyes.
+
+ nasa_sea%>%
+    ggplot(mapping = aes(x = date, y = sea))+ #mapping the axis' and plotting the data. 
+    geom_point()+
+   theme_classic()+
+    labs(x = "Years", y = "change in sea level compared to a reference year in mm") #renaming axis' for clarity 
+```
+
+### 1.d: Read nasa_carbon_dioxide.txt into a tibble called nasa_co2 containing only the variables date and co2. The former should have type date (you can assume that the day of the month is always the 1st).The latter should be the values from the column monthly average. You may understand co2 as the average global CO2 level in parts per million (ppm). Visualise the contents of nasa_co2.
+
+```{r, warning = FALSE}
+nasa_co2 <- read_table(here("data", "nasa_carbon_dioxide.txt"), skip = 53, col_names = FALSE)%>% #reading the data and setting it to a variable 
+    rename(co2 = X4, date = X1)%>% #renaming the columns, date and co2
+    mutate(date = make_date(date, X2))%>%  #making the date column into a date type 
+  select(date, co2)%>% #selecting and filtering the data to be greater than 0 to avoid negative inputs. 
+  filter(co2 >0)%>%
+  clean_names() #setting it to snake eyes format. 
+
+ nasa_co2%>%
+    ggplot(mapping = aes(x = date, y = co2))+ #mapping the data and renaming the axis' for clarity. 
+    labs(x = "Year", y = "CO2 level in parts per million (ppm)")+
+    geom_point(size = 1.2)+ #changing the size 
+    theme_classic() #sticking to the theme
+```
+
+### 1.e: Combine nasa_temp, nasa_ice, nasa_sea and nasa_co2 into a single tibble called nasa without loss of any data.
+
+```{r}
+nasa <-full_join(nasa_temp, nasa_sea, by = "date")%>% #reading the data in, saving as a variable NASA 
+  full_join(nasa_co2, nasa_ice, by = "date") # using the function n to merge the tibbles together by the common variable "Date"
+
+view(nasa) #just checking I haven't lost any data 
+```
+
+### 1.f: Visualise the correlation of the variables co2 and temp in nasa for the years 1960–2020 in a scatterplot whose points are sequentially coloured by year such that the points associated with each decade are shaded differently. Ensure that a meaningful sequential colour scheme is used and that all axes and the legend are labeled appropriately.
+
+```{r}
+nasa_filtered <-nasa%>% 
+  clean_names()%>%#saving the data to a new variable 
+  select(date, co2, temp)%>% #selecting the correct columns
+  filter(between(date, as.Date("1960-01-01"), as.Date("2020-01-01"))) #filtering the data so that the dates are between two date types. 
+nasa_filtered%>%
+  ggplot(mapping = aes(x = co2, y = temp, colour = date))+ #setting colour = the date, to show the sequential 
+  labs(x = "CO2 level in parts per million (ppm)",y = "average temp across global land & ocean surfaces in °C")+
+  theme_classic()+#mapping and plotting the data types
+  geom_point() #plotting the point for the variables
+```
+
+## Question 2
+
+### 2.a: Read the table found under under “3. Composite CO2 record (0-800 kyr BP)” in luthi_carbon_dioxide.txt (i.e. starting from Line 774) into a tibble called historic_co2 containing the variables yrbp (“years before present”), the first column from the original file, and co2, the second column in the original file. You may again interpret co2 as the average global CO2 level in parts per million (ppm).
+
+```{r}
+historical_co2 <- read_table(here("data","luthi_carbon_dioxide.txt"),skip = 773)%>% #reading the data, and saving it to the variable
+  rename(yrbp = "Age(yrBP)", #renaming the variables 
+         co2 = "CO2(ppmv)")
+```
+
+### 2.b: Assume that the reference year in the original file is 2008, i.e. that yrbp counts the years before 2008. Change the reference year to 2021 so that, e.g., the value 137 [years before 2008] of yrbp should now be 150 [years before 2021]. Likewise, add a column yrbp to nasa_co2 which similarly counts the years before 2021 for each measurement. Finally, combine historic_co2 and the modified version of nasa_co2 into a single tibble called combined_co2 which contains only the variables co2 (as yearly averages where needed) and yrbp.
+
+```{r}
+
+historical_co2_1 <- historical_co2%>% #adding 13 to reach 2021, since the origin was 2008
+  mutate(yrbp = yrbp + 13)
+
+nasa_co2_new <-nasa_co2%>% # just creating a new variable which differs to our first NASA co2. 
+  mutate(date = year(date))%>% #changing date to = year, then set as a date.
+  mutate(yrbp = 2021 - date)%>% # yrbp to be set as 2021 - the date in place. 
+  select(co2, yrbp) # selecting the relevant variables 
+
+combined_co2 <- historical_co2_1%>%
+  full_join(nasa_co2_new, by = c("yrbp" = "yrbp","co2" = "co2"), keep = FALSE)%>% #joining the two tibbles together 
+  group_by(yrbp) %>%  #grouping by the years before present 
+  summarise(co2 = mean(co2)) #summarizing is just reducing multiple variables into one 
+
+combined_co2 #just seeing if they've combined okay. 
+```
+
+### 2.c: Recreate the following figure based on the data set combined_co2 as accurately as possible (the placement and colour of the annotation need not match exactly).[8]
+
+
+```{r}
+p <-combined_co2%>% #setting a new variable p for the point 
+  ggplot(mapping = aes(x =(yrbp), y = co2)) + labs(x ="Years before present", y = "Carbon dioxide [ppm]")+
+  geom_line(size = 0.7)+ 
+
+#setting the x and y variables to yrbp and co2. Adding a title for both the x and y axis. increasing the line size to mirror the graph
+  
+scale_x_reverse(labels = scales:: label_comma())
+
+#reversing the scale of the x axis for it to be descending and setting the x axis to relevant scales. Including commas between the names on the x axis. 
+
+point_coords <- c(combined_co2$yrbp[1], combined_co2$co2[1])  #plotting the coordinates for the point
+label_coords <- point_coords + c(-200000, -30) #here im just doing the same, but for the text. 
+
+p_curve <-
+  annotate(
+    geom = "curve",
+    x = 90000, #setting the location of the x 
+    y = 400, #setting the location of the y 
+    xend = point_coords[1], 
+    yend = point_coords[2]+1,
+    curvature = -0.3, #altering the curvature of the arrow 
+    arrow = arrow(length = unit(3, "mm")),
+    colour = "#F8766D") #setting the colour scheme to mirror the graph 
+p+ 
+  p_curve+ #combining the two points, p and the curvature
+  annotate(
+    geom = "text", 
+    x = 200000, #plotting the two coordinates of the x and y axis. 
+    y = 380,
+    label = "2021 average: 
+    417 ppm", #setting the label of our point 
+    hjust = 0.1, vjust = -0.1,
+    lineheight = 0.8, #adjusting the height of the line to copy the original. 
+    colour = "#F8766D")+#setting the colour . 
+    theme_classic()#setting the theme
+```
+
+### 3.a: Read the first spreadsheet from the file nsidc_sea_ice_daily_extent.xlsx into a tidy tibble called sea_ice_1 containing the column extent as well as integer columns year, month and day.
+
+```{r}
+library(readxl) #in order to read excel files, we load readxl. 
+
+sea_ice_1 <-read_xlsx(here("data" ,"nsidc_sea_ice_daily_extent.xlsx"),sheet = 1)%>% #reading in the excel file, using sheet = 1 so we can pick the correct spreadsheet. 
+  fill(1)%>% #filling in the elements which weren't inputted
+  rename(month = 1, #renaming both 1 and 2, to month and day. 
+         day = 2)%>%
+  select(-c("...47", "1981-2010 mean", "1981-2010 median"))%>% #were getting rid of the columns we do not need 
+  mutate(month = as.integer(factor(month, levels = month.name)))%>% # now where changing month to be an integer. 
+  pivot_longer(cols = -c(month, day), names_to = "year")%>% #data set is wide, hence we use pivot longer in order to restructure the data set. 
+    rename(extent = value)%>% #renaming the values
+    mutate(year = parse_integer(year))%>% #changing the data type of year to an integer 
+    mutate(day = as.integer(day)) #doing the same here for day
+
+sea_ice_1
+```
+
+### 3.b: Transform sea_ice_1 so that you are left with a tibble with only three variables: year, month and proportion_baseline_extent. The latter should be the monthly averages of the original extent divided by a month-specific baseline extent. As a baseline, take the monthly averages from the year 1979. Store the output in a tibble called sea_ice_2.
+
+```{r}
+baseline <- sea_ice_1%>% #creating a new variable called baseline 
+  filter(year == "1979")%>% #filtering to only include the year "1979", then removing NA's and grouping by month and year.
+  remove_missing(na.rm = TRUE)%>%
+  group_by(year, month) %>%  #cleaning the data set by setting it to snake eyes format. 
+  summarise(average_baseline = mean(c(extent), na.rm = TRUE))
+              #setting average baseline to be the mean of the columns extent. Again removing NA's as this will mess with the mean 
+
+monthly_average_extent <- sea_ice_1 %>% #creating a new variable 
+  clean_names()%>% #setting to snake eyes
+  remove_empty()%>% #removing empties 
+  group_by(year, month)%>% # grouping by year and month
+  summarise(average_monthly = mean(c(extent), na.rm = TRUE))%>% #creating a new variables average month, which takes the mean of the value extent 
+  remove_missing() # removing missing variables
+  
+nasa_ice_2 <- monthly_average_extent%>% #creating a new variable 
+  full_join(
+    baseline, #using full join, to join baseline by month. 
+    by = c("month" = "month"))%>%
+    mutate(proportion_baseline_extent = average_monthly/average_baseline)%>% #creating a new column which equals average month / average baseline
+    arrange(month)%>% #arranging the columns in order of month 
+  select(year.x, month, proportion_baseline_extent)%>% #selecting and renaming the dataset
+  rename(year = "year.x")
+  
+nasa_ice_2
+
+```
+
+### 3.c: Recreate the following figure based on the data set sea_ice_2 as accurately as possible (the colour scheme is RdPu from the RColorBrewer package). Note that years with incomplete records (i.e. 1978 and 2021) are not shown.
+
+```{r}
+
+library("RColorBrewer") #loading in the relevant package 
+
+nasa_ice_2%>% #filtering the data to be between 1978 - 2021
+  filter(year != 1978 & year != 2021) %>%
+  ggplot(mapping = aes(x = year, y = month, fill = proportion_baseline_extent))+ #plotting the data 
+  geom_tile() + #using geom fill to mirror the graph
+  scale_fill_distiller(palette = "RdPu")+ #selecting the relevant colour palette 
+  scale_y_continuous(expand = expansion(mult = c(0,0)), #setting the y scale to include breaks 
+                     breaks = c(1:12),  # 1-12 for the months in the year 
+                     labels= c(month.name))+ # labels are = to the month name 
+  scale_x_continuous(expand = expansion(mult = c(0,0))) + # setting the x scale as continuous 
+  theme(plot.title = element_text( #setting the relevant theme
+                   hjust = 0.6), #setting the height of the text 
+        axis.line = element_line(colour = "black"))+ #changing the colour to black 
+  labs(title = "Sea ice (northern hemisphere)", #changing the titles and fill. 
+       fill = "Proportion of 1979 extent",
+      y = "Month", 
+      x = "Year")
+```
+
+## Question 4
+
+### 4.a: Load the data set stop_and_search.csv into a tibble called stop_search_1. Ensure that all variables have a sensible data type and that long variable/column names are avoided by renaming Number of stops... to stops Population by... to population and Rate of... to rate. Focus only on cases in which ethnicity is one of “All”, “Asian”, “Black”, “White”, “Other”. You may discard all other cases and any redundant variables.
+
+```{r}
+  stop_search_1 <-read_csv(here("data", "stop_and_search.csv"))%>% #renaming the new variable
+  clean_names()%>% #cleaning to snake eyes format
+  rename(stops = number_of_stop_and_searches,
+         population = population_by_ethnicity, #renaming the variables 
+         rate = rate_per_1_000_population_by_ethnicity,
+         year = time)%>%
+   mutate(population = parse_number(population),
+         rate = parse_double(rate), #changing the data types to their appropriate type
+         year = parse_factor(year),
+         stops = parse_number(stops))%>%
+  filter(ethnicity %in% c("All","Asian","Black","White","Other"))%>% #filtering and selecting the important variables
+  select("year", "ethnicity", "legislation_type", "geography", "stops", "population", "rate")
+ 
+stop_search_1
+```
+
+### 4.b: Add a column relative_disparity to stop_search_1 which, for each ethnicity, gives the stop-and-search rate divided by the stop-and-search rate for “White”. Store the output in stop_search_2.
+
+```{r}
+stop_white <- stop_search_1%>% #renaming a new variable
+  filter(ethnicity == "White")%>% #filtering for ethnicity = white
+  select("year", "legislation_type", "geography", "rate")%>% #selecting the correct types 
+  rename(white_rate = "rate")%>% #renaming rate to white rate
+  unique()%>% #getting rid of duplicate variables
+  clean_names() #formatting snake eyes
+
+stop_search_2 <- stop_search_1%>%
+  full_join(stop_white, stop_search_1, by =  #full join the two tibbles by year, legislation type and geography
+  c("year" = "year",
+  "legislation_type"="legislation_type",
+  "geography" = "geography"))%>%
+  mutate(relative_disparity = rate/white_rate)%>% #creating a new variable which equates relative disparity as rate/white rate
+  unique()%>% #remmoves dublicates
+  clean_names() #formatting again
+
+stop_search_2
+```
+
+### 4.c: State three interesting and specific questions that can be answered using the data. For each question, also mention how it is operationalised. The questions must be qualitatively different.
+
+1. Is there a difference in the amounts of stops and searches between midland areas? Specifically, Leciestershire, Northamptonshire and Derbyshire. Do we notice any trends over the years 2008-2020. 
+
+2. Are black or asain ethnicities more susceptible to being stopped and searched than others? Can we detect a clear trend? I will be using the pre-defined relative disparity to compare against each ethinicity. 
+
+
+3. How has the rate of stops changed over the years between 2008-2019 in Merseyside? Has there been an overall increase? What trend can we see. 
+
+
+###  4.d: For each of the three operationalised questions from (c), provide an answer in the form of one or more suitable visualisations along with a brief text (only one or two but full sentences) explaining how the figure provides the answer to the question.
+
+```{r}
+Question_1 <- stop_search_1%>% #defining the variable for the first question 
+  select(stops, year, geography)%>% #selecting the correct variables 
+  filter(geography %in% c("Northamptonshire", "Derbyshire", "Leicestershire"))%>% #filtering for the locations 
+  group_by(year, geography)%>% #grouping by year and the locations 
+  summarise(total_stops = sum(stops, na.rm = TRUE))%>% #reducing multiple variables to similar types. 
+  separate(col = year, #separating into columns 
+           c("start_fin_year", "end_fin_year"), #setting where I divided the columns
+            sep = "/")%>% #this is defining the separator 
+  mutate(start_fin_year = parse_date(start_fin_year, format = "%Y"))%>%  #making a new column, which parses it as a date data type. 
+  arrange(geography) #arranging for the location 
+
+
+Q1_plot <- Question_1%>% #redefining the plot type 
+  ggplot(mapping = aes(x = start_fin_year, y = total_stops)) + #plotting the graph 
+  labs(x = "Years", y = "Total Stops", title ="stop and searches in Northamptonshire, Derbyshire and Leicestershire")+ 
+  scale_x_date(date_breaks = "5 year", #setting the scale for the x axis
+              date_labels = "%Y")+ #changing the label names. 
+  geom_col()+ #plotting as column 
+  theme_classic()+ #setting the theme throughout 
+  facet_wrap(~geography) #faceting the graph to show individual changes. 
+
+Q1_plot
+```
+
+From the plot we can clearly infer that over time, the number of stop and searches initially started high, but since 2010 has been on the decline. Leicestershire, peaked in 2010 having the most amount of searches, whereas Northamptonshire and Derbyshire remained similar throughout the years 2008-2020.
+
+```{r}
+Question_2 <- stop_search_2%>% #defining the variable for the first question 
+  select(ethnicity, year, relative_disparity)%>%#selecting the relevant variables 
+  filter(ethnicity %in% c("Asian", "Black", "White"), rm.na = TRUE)%>%
+  group_by(year, ethnicity)%>% #grouping the data 
+  summarise(rel_disparity_ethnicity = mean(c(relative_disparity), na.rm = TRUE))%>%
+  separate(col = year, #separating into columns 
+          c("start_fin_year", "end_fin_year"), #setting where I divided the columns
+          sep = "/")%>% #this is defining the separator 
+  mutate(start_fin_year = parse_date(start_fin_year, format = "%Y"))#making a new column, which parses it as a date data type. 
+
+Q2_plot <- Question_2%>% #redefining the plot type 
+  ggplot(mapping = aes(x = start_fin_year, y = rel_disparity_ethnicity, colour = ethnicity)) + #plotting the data set, setting the scale of the axis
+  scale_x_date(date_breaks = "1 year", #breaks set to 1 year
+              date_labels = "%Y")+  #setting the label to the correct format.
+  labs(x = "Years", y = "Relative disparity", colour = "Ethnicity", title = "Comparing relative disparity across ethinicities")+ #renaming the axis'
+  geom_point()+ 
+  geom_line()+#plotting as point 
+  theme_classic() #setting the theme throughout 
+
+Q2_plot
+```
+From the plot we can see that across all the years, black ethnicities are consistently at a higher proportional risk to be stopped throughout the years. In 2017, we can denote that black people were up to 8 times more likely to be stopped in comparison to white people. This is similar with the Asian population who are increasingly more likely to be stopped over white individuals. I didn't include the "Other" variable as it was missing some data,  which wouldnt add any impactful conclusion. 
+
+```{r}
+Question_3 <- stop_search_2%>%
+  select(year, geography, rate)%>% #selecting the relevant data 
+  filter(geography %in% "Merseyside", na.rm = TRUE)%>% #filtering for just Merseyside
+  group_by(year, geography)%>% #grouping by year and geography 
+  summarise(total_merseyside= sum(c(rate), na.rm = TRUE))%>% #creating a new Merseyside variable which sums up the yearly 
+  separate(col = year, #separating into columns 
+          c("start_fin_year", "end_fin_year"), #setting where I divided the columns
+          sep = "/")%>% #this is defining the separator 
+  mutate(start_fin_year = parse_date(start_fin_year, format = "%Y"))
+
+Q3_plot<- Question_3%>% #redefining the plot type 
+  ggplot(mapping = aes(x = start_fin_year, y = total_merseyside))+ #plotting the aesthetic for x and y
+  scale_x_date(date_breaks = "1 year",
+              date_labels = "%Y")+ #setting the x scale 
+  labs(x = "Years", y = "Rate of Stops", title = "rate of stops in Merseyside between 2005-2019")+
+  theme_classic()+#selecting the theme 
+  geom_col() #setting the plot as a column 
+
+Q3_plot
+```
+The graph shows that initially, there was a gradually increase in the rate of stops. It peaked between 2007-2008, which we can see there was around 230.Despite the 2015 decline, there has been a increase following 2016.
+
+
