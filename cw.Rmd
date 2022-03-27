@@ -18,7 +18,8 @@ library("lubridate")
 
 ## Question 1
 
-### 1.a: Read nasa_global_temperature.txt into a tibble called nasa_temp containing only the variables date and temp. The former should have type date (you can assume that month and day are January, 1st). The latter is the column named No_smoothing in the original file. You may understand temp as the average temperature across global land and ocean surfaces in °C. Visualise the contents of nasa_temp.
+### 1.a: Read nasa_global_temperature.txt into a tibble called nasa_temp containing only the variables date and temp. The former should have type date (you can assume that month and day are January, 1st). 
+##The latter is the column named No_smoothing in the original file. You may understand temp as the average temperature across global land and ocean surfaces in °C. Visualise the contents of nasa_temp.
 ```{r, warning = FALSE}
 
 nasa_temp1<- read_table(here("data", "nasa_global_temperature.txt"), skip = 3)%>% #reading the data as a table
@@ -38,7 +39,9 @@ nasa_temp%>%
   theme_classic()
 ```
 
-### 1.b: Read nasa_arctic_sea_ice.csv into a tibble called nasa_ice containing only the variables date and ice. The former should have type date (you can assume that month and day are January 1st). The latter is the column named extent in the original file. You may understand ice as the minimum arctic sea ice extent in million square km. Visualise the contents of nasa_ice.
+### 1.b: Read nasa_arctic_sea_ice.csv into a tibble called nasa_ice containing only the variables date and ice. 
+## The former should have type date (you can assume that month and day are January 1st). The latter is the column named extent in the original file.
+## You may understand ice as the minimum arctic sea ice extent in million square km. Visualise the contents of nasa_ice.
 
 ```{r, warning = FALSE}
 nasa_ice <-read_csv2(here("data", "nasa_arctic_sea_ice.csv"))%>% #loading in the data, naming the variable
@@ -59,7 +62,8 @@ nasa_ice%>%
     theme_classic()#plotting the data 
 ```
 
-### 1.c: Read nasa_sea_level.csv into a tibble called nasa_sea containing only variables date and sea. The former should have type date (you can assume that fractional years have been calculated for time zone “UTC”). The latter should be the values from the twelfth column in the original file. You may understand sea as the change in sea level compared to a reference year in mm. Visualise the contents of nasa_sea.[3
+### 1.c: Read nasa_sea_level.csv into a tibble called nasa_sea containing only variables date and sea. The former should have type date 
+## (you can assume that fractional years have been calculated for time zone “UTC”). The latter should be the values from the twelfth column in the original file. You ## may understand sea as the change in sea level compared to a reference year in mm. Visualise the contents of nasa_sea.[3
 
 ```{r, warning = FALSE}
 nasa_sea <-read_table(here("data","nasa_sea_level.csv"), skip = 48 ,col_names = FALSE)%>% #reading the data in 
@@ -77,7 +81,8 @@ nasa_sea <-read_table(here("data","nasa_sea_level.csv"), skip = 48 ,col_names = 
     labs(x = "Years", y = "change in sea level compared to a reference year in mm") #renaming axis' for clarity 
 ```
 
-### 1.d: Read nasa_carbon_dioxide.txt into a tibble called nasa_co2 containing only the variables date and co2. The former should have type date (you can assume that the day of the month is always the 1st).The latter should be the values from the column monthly average. You may understand co2 as the average global CO2 level in parts per million (ppm). Visualise the contents of nasa_co2.
+### 1.d: Read nasa_carbon_dioxide.txt into a tibble called nasa_co2 containing only the variables date and co2. The former should have type date 
+## (you can assume that the day of the month is always the 1st).The latter should be the values from the column monthly average. You may understand co2 as the average ## global CO2 level in parts per million (ppm). Visualise the contents of nasa_co2.
 
 ```{r, warning = FALSE}
 nasa_co2 <- read_table(here("data", "nasa_carbon_dioxide.txt"), skip = 53, col_names = FALSE)%>% #reading the data and setting it to a variable 
@@ -103,7 +108,7 @@ nasa <-full_join(nasa_temp, nasa_sea, by = "date")%>% #reading the data in, savi
 view(nasa) #just checking I haven't lost any data 
 ```
 
-### 1.f: Visualise the correlation of the variables co2 and temp in nasa for the years 1960–2020 in a scatterplot whose points are sequentially coloured by year such that the points associated with each decade are shaded differently. Ensure that a meaningful sequential colour scheme is used and that all axes and the legend are labeled appropriately.
+### 1.f: Visualise the correlation of the variables co2 and temp in nasa for the years 1960–2020 in a scatterplot whose points are sequentially coloured by year such ## that the points associated with each decade are shaded differently. Ensure that a meaningful sequential colour scheme is used and that all axes and the legend are ## labeled appropriately.
 
 ```{r}
 nasa_filtered <-nasa%>% 
@@ -119,7 +124,9 @@ nasa_filtered%>%
 
 ## Question 2
 
-### 2.a: Read the table found under under “3. Composite CO2 record (0-800 kyr BP)” in luthi_carbon_dioxide.txt (i.e. starting from Line 774) into a tibble called historic_co2 containing the variables yrbp (“years before present”), the first column from the original file, and co2, the second column in the original file. You may again interpret co2 as the average global CO2 level in parts per million (ppm).
+### 2.a: Read the table found under under “3. Composite CO2 record (0-800 kyr BP)” in luthi_carbon_dioxide.txt (i.e. starting from Line 774) into a tibble called 
+## historic_co2 containing the variables yrbp (“years before present”), the first column from the original file, and co2, the second column in the original file. You 
+## may again interpret co2 as the average global CO2 level in parts per million (ppm).
 
 ```{r}
 historical_co2 <- read_table(here("data","luthi_carbon_dioxide.txt"),skip = 773)%>% #reading the data, and saving it to the variable
@@ -127,7 +134,10 @@ historical_co2 <- read_table(here("data","luthi_carbon_dioxide.txt"),skip = 773)
          co2 = "CO2(ppmv)")
 ```
 
-### 2.b: Assume that the reference year in the original file is 2008, i.e. that yrbp counts the years before 2008. Change the reference year to 2021 so that, e.g., the value 137 [years before 2008] of yrbp should now be 150 [years before 2021]. Likewise, add a column yrbp to nasa_co2 which similarly counts the years before 2021 for each measurement. Finally, combine historic_co2 and the modified version of nasa_co2 into a single tibble called combined_co2 which contains only the variables co2 (as yearly averages where needed) and yrbp.
+### 2.b: Assume that the reference year in the original file is 2008, i.e. that yrbp counts the years before 2008. Change the reference year to 2021 so that,
+## e.g., the value 137 [years before 2008] of yrbp should now be 150 [years before 2021]. Likewise, add a column yrbp to nasa_co2 which similarly counts the years 
+## before 2021 for each measurement. Finally, combine historic_co2 and the modified version of nasa_co2 into a single tibble called combined_co2 which contains only 
+## the variables co2 (as yearly averages where needed) and yrbp.
 
 ```{r}
 
@@ -147,7 +157,8 @@ combined_co2 <- historical_co2_1%>%
 combined_co2 #just seeing if they've combined okay. 
 ```
 
-### 2.c: Recreate the following figure based on the data set combined_co2 as accurately as possible (the placement and colour of the annotation need not match exactly).[8]
+### 2.c: Recreate the following figure based on the data set combined_co2 as accurately as possible (the placement and colour of the annotation need not match
+## exactly).[8]
 
 
 ```{r}
@@ -188,7 +199,8 @@ p+
     theme_classic()#setting the theme
 ```
 
-### 3.a: Read the first spreadsheet from the file nsidc_sea_ice_daily_extent.xlsx into a tidy tibble called sea_ice_1 containing the column extent as well as integer columns year, month and day.
+### 3.a: Read the first spreadsheet from the file nsidc_sea_ice_daily_extent.xlsx into a tidy tibble called sea_ice_1 containing the column extent 
+## as well as integer columns year, month and day.
 
 ```{r}
 library(readxl) #in order to read excel files, we load readxl. 
@@ -207,7 +219,9 @@ sea_ice_1 <-read_xlsx(here("data" ,"nsidc_sea_ice_daily_extent.xlsx"),sheet = 1)
 sea_ice_1
 ```
 
-### 3.b: Transform sea_ice_1 so that you are left with a tibble with only three variables: year, month and proportion_baseline_extent. The latter should be the monthly averages of the original extent divided by a month-specific baseline extent. As a baseline, take the monthly averages from the year 1979. Store the output in a tibble called sea_ice_2.
+### 3.b: Transform sea_ice_1 so that you are left with a tibble with only three variables: year, month and proportion_baseline_extent. The latter should be the monthly
+## averages of the original extent divided by a month-specific baseline extent. As a baseline, take the monthly averages from the year 1979. 
+## Store the output in a tibble called sea_ice_2.
 
 ```{r}
 baseline <- sea_ice_1%>% #creating a new variable called baseline 
@@ -237,7 +251,8 @@ nasa_ice_2
 
 ```
 
-### 3.c: Recreate the following figure based on the data set sea_ice_2 as accurately as possible (the colour scheme is RdPu from the RColorBrewer package). Note that years with incomplete records (i.e. 1978 and 2021) are not shown.
+### 3.c: Recreate the following figure based on the data set sea_ice_2 as accurately as possible 
+## (the colour scheme is RdPu from the RColorBrewer package). Note that years with incomplete records (i.e. 1978 and 2021) are not shown.
 
 ```{r}
 
@@ -263,7 +278,9 @@ nasa_ice_2%>% #filtering the data to be between 1978 - 2021
 
 ## Question 4
 
-### 4.a: Load the data set stop_and_search.csv into a tibble called stop_search_1. Ensure that all variables have a sensible data type and that long variable/column names are avoided by renaming Number of stops... to stops Population by... to population and Rate of... to rate. Focus only on cases in which ethnicity is one of “All”, “Asian”, “Black”, “White”, “Other”. You may discard all other cases and any redundant variables.
+### 4.a: Load the data set stop_and_search.csv into a tibble called stop_search_1. Ensure that all variables have a sensible data type and that long variable/column 
+## names are avoided by renaming Number of stops... to stops Population by... to population and Rate of... to rate. Focus only on cases in which ethnicity is one of 
+## “All”, “Asian”, “Black”, “White”, “Other”. You may discard all other cases and any redundant variables.
 
 ```{r}
   stop_search_1 <-read_csv(here("data", "stop_and_search.csv"))%>% #renaming the new variable
@@ -282,7 +299,8 @@ nasa_ice_2%>% #filtering the data to be between 1978 - 2021
 stop_search_1
 ```
 
-### 4.b: Add a column relative_disparity to stop_search_1 which, for each ethnicity, gives the stop-and-search rate divided by the stop-and-search rate for “White”. Store the output in stop_search_2.
+### 4.b: Add a column relative_disparity to stop_search_1 which, for each ethnicity, gives the stop-and-search rate divided by the stop-and-search rate for “White”. 
+## Store the output in stop_search_2.
 
 ```{r}
 stop_white <- stop_search_1%>% #renaming a new variable
