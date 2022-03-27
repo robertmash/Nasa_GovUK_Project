@@ -1,4 +1,4 @@
-## First data science project
+## Data Cleaning & Visualisations
 - Focusing on cleaning and visulisation using R. 
 - used packages: Tidyvserse, ggplot2, janitor, here, and lubridate
 - Uses data from Nasa and GOV.uk 
